@@ -1,6 +1,7 @@
 package com.turnos.vista;
 
 import com.turnos.modelo.Cliente;
+import com.turnos.modelo.ResumenServicio;
 import com.turnos.modelo.Servicio;
 import com.turnos.modelo.Turno;
 import com.turnos.negocio.ServicioNegocio;
@@ -9,7 +10,6 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 public class MenuPrincipal {
@@ -61,16 +61,16 @@ public class MenuPrincipal {
 
     private void mostrarMenuPrincipal() {
         System.out.println("\n=== SISTEMA DE TURNOS ===");
-        System.out.println("1. Gestión de clientes");
-        System.out.println("2. Gestión de servicios");
-        System.out.println("3. Generar turno");
-        System.out.println("4. Atender siguiente turno");
-        System.out.println("5. Cancelar turno");
-        System.out.println("6. Consultar turnos pendientes");
-        System.out.println("7. Consultar turnos atendidos");
-        System.out.println("8. Consultar turnos cancelados");
-        System.out.println("9. Historial de un cliente");
-        System.out.println("10. Resumen por servicio");
+        System.out.println("1.  Gestión de clientes");
+        System.out.println("2.  Gestión de servicios");
+        System.out.println("3.  Generar turno");
+        System.out.println("4.  Atender siguiente turno");
+        System.out.println("5.  Cancelar turno");
+        System.out.println("6.  Consultar turnos pendientes");
+        System.out.println("7.  Consultar turnos atendidos");
+        System.out.println("8.  Consultar turnos cancelados");
+        System.out.println("9.  Historial de un cliente");
+        System.out.println("10. Resumen de servicios");
         System.out.println("11. Salir");
     }
 
@@ -262,9 +262,29 @@ public class MenuPrincipal {
 
     private void mostrarResumenPorServicio() throws SQLException {
         System.out.println("\n--- RESUMEN POR SERVICIO ---");
-        for (Map.Entry<String, Long> entrada : negocio.getResumenPorServicio().entrySet()) {
-            System.out.printf("%s: %d turno(s)%n", entrada.getKey(), entrada.getValue());
+        System.out.printf("%-30s %12s %12s %12s %12s%n",
+                "Servicio", "Pendientes", "Atendidos", "Cancelados", "Total");
+        System.out.println("-".repeat(82));
+
+        long pendientes = 0;
+        long atendidos = 0;
+        long cancelados = 0;
+        long total = 0;
+        for (ResumenServicio resumen : negocio.getResumenPorServicio()) {
+            System.out.printf("%-30s %12d %12d %12d %12d%n",
+                    resumen.nombreServicio(),
+                    resumen.pendientes(),
+                    resumen.atendidos(),
+                    resumen.cancelados(),
+                    resumen.total());
+            pendientes += resumen.pendientes();
+            atendidos += resumen.atendidos();
+            cancelados += resumen.cancelados();
+            total += resumen.total();
         }
+        System.out.println("-".repeat(82));
+        System.out.printf("%-30s %12d %12d %12d %12d%n",
+                "TOTAL GENERAL", pendientes, atendidos, cancelados, total);
     }
 
     private void mostrarClientes(List<Cliente> clientes) {
