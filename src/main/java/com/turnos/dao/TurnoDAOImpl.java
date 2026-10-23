@@ -1,5 +1,6 @@
 package com.turnos.dao;
 
+import com.turnos.modelo.ResumenServicio;
 import com.turnos.modelo.Turno;
 
 import java.sql.Connection;
@@ -8,9 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class TurnoDAOImpl implements ITurnoDAO {
@@ -45,7 +44,11 @@ public class TurnoDAOImpl implements ITurnoDAO {
             ORDER BY numero
             """;
     private static final String RESUMEN_POR_SERVICIO = """
-            SELECT s.nombre, COUNT(t.numero) AS cantidad
+            SELECT s.nombre,
+                   SUM(CASE WHEN t.estado = 'PENDIENTE' THEN 1 ELSE 0 END) AS pendientes,
+                   SUM(CASE WHEN t.estado = 'ATENDIDO' THEN 1 ELSE 0 END) AS atendidos,
+                   SUM(CASE WHEN t.estado = 'CANCELADO' THEN 1 ELSE 0 END) AS cancelados,
+                   COUNT(t.numero) AS total
             FROM servicios s
             LEFT JOIN turnos t ON t.codigo_servicio = s.codigo
             GROUP BY s.codigo, s.nombre
@@ -125,15 +128,18 @@ public class TurnoDAOImpl implements ITurnoDAO {
     }
 
     @Override
-    public Map<String, Long> resumenPorServicio() throws SQLException {
-        Map<String, Long> resumen = new LinkedHashMap<>();
+    public List<ResumenServicio> resumenPorServicio() throws SQLException {
+        List<ResumenServicio> resumen = new ArrayList<>();
         try (Connection conexion = SQLiteConnection.obtenerConexion();
              PreparedStatement statement = conexion.prepareStatement(RESUMEN_POR_SERVICIO);
              ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
-                resumen.put(
+                resumen.add(new ResumenServicio(
                         resultSet.getString("nombre"),
-                        resultSet.getLong("cantidad"));
+                        resultSet.getLong("pendientes"),
+                        resultSet.getLong("atendidos"),
+                        resultSet.getLong("cancelados"),
+                        resultSet.getLong("total")));
             }
         }
         return resumen;

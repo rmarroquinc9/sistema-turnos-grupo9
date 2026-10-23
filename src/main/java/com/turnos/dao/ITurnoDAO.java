@@ -1,10 +1,10 @@
 package com.turnos.dao;
 
+import com.turnos.modelo.ResumenServicio;
 import com.turnos.modelo.Turno;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public interface ITurnoDAO {
@@ -19,5 +19,5 @@ public interface ITurnoDAO {
 
     List<Turno> buscarPorCliente(int codigoCliente) throws SQLException;
 
-    Map<String, Long> resumenPorServicio() throws SQLException;
+    List<ResumenServicio> resumenPorServicio() throws SQLException;
 }
