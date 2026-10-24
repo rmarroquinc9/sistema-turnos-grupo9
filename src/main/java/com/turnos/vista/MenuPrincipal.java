@@ -7,8 +7,10 @@ import com.turnos.modelo.Turno;
 import com.turnos.negocio.ServicioNegocio;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Scanner;
 
@@ -204,7 +206,15 @@ public class MenuPrincipal {
     }
 
     private void generarTurno() throws SQLException {
+        List<Servicio> serviciosActivos = negocio.getServiciosActivos();
+        if (serviciosActivos.isEmpty()) {
+            System.out.println("No hay servicios activos disponibles para generar turnos.");
+            return;
+        }
         int codigoCliente = leerEnteroPositivo("Código del cliente: ");
+        System.out.println("Servicios activos:");
+        serviciosActivos.forEach(servicio ->
+                System.out.printf("- %d: %s%n", servicio.getCodigo(), servicio.getNombre()));
         int codigoServicio = leerEnteroPositivo("Código del servicio: ");
         Turno turno = negocio.generarTurno(
                 codigoCliente,
@@ -261,30 +271,111 @@ public class MenuPrincipal {
     }
 
     private void mostrarResumenPorServicio() throws SQLException {
+        System.out.println("\n--- FILTROS DEL RESUMEN POR SERVICIO ---");
+        LocalDate desde = leerFechaOpcional("Fecha inicial (AAAA-MM-DD, Enter para omitir): ");
+        LocalDate hasta = leerFechaOpcional("Fecha final (AAAA-MM-DD, Enter para omitir): ");
+        System.out.println("Servicios:");
+        negocio.getServicios().forEach(servicio ->
+                System.out.printf("- %d: %s%n", servicio.getCodigo(), servicio.getNombre()));
+        Integer codigoServicio = leerCodigoServicioOpcional();
+        String estado = leerEstadoTurnoOpcional();
+
+        List<ResumenServicio> resumenes =
+                negocio.getResumenPorServicio(desde, hasta, codigoServicio, estado);
         System.out.println("\n--- RESUMEN POR SERVICIO ---");
-        System.out.printf("%-30s %12s %12s %12s %12s%n",
-                "Servicio", "Pendientes", "Atendidos", "Cancelados", "Total");
-        System.out.println("-".repeat(82));
+        System.out.printf("%-24s %10s %11s %11s %11s %10s %12s%n",
+                "Servicio", "Pendientes", "Atendidos", "Cancelados", "Total",
+                "% cancel.", "Prom. min.");
+        System.out.println("-".repeat(95));
 
         long pendientes = 0;
         long atendidos = 0;
         long cancelados = 0;
         long total = 0;
-        for (ResumenServicio resumen : negocio.getResumenPorServicio()) {
-            System.out.printf("%-30s %12d %12d %12d %12d%n",
-                    resumen.nombreServicio(),
+        double minutosAtencionTotal = 0;
+        ResumenServicio masSolicitado = null;
+        for (ResumenServicio resumen : resumenes) {
+            System.out.printf("%-24s %10d %11d %11d %11d %9.1f%% %12.1f%n",
+                    resumen.codigoServicio() + ": " + resumen.nombreServicio(),
                     resumen.pendientes(),
                     resumen.atendidos(),
                     resumen.cancelados(),
-                    resumen.total());
+                    resumen.total(),
+                    resumen.porcentajeCancelacion(),
+                    resumen.promedioMinutosAtencion());
             pendientes += resumen.pendientes();
             atendidos += resumen.atendidos();
             cancelados += resumen.cancelados();
             total += resumen.total();
+            minutosAtencionTotal += resumen.promedioMinutosAtencion() * resumen.atendidos();
+            if (resumen.total() > 0
+                    && (masSolicitado == null || resumen.total() > masSolicitado.total())) {
+                masSolicitado = resumen;
+            }
         }
-        System.out.println("-".repeat(82));
-        System.out.printf("%-30s %12d %12d %12d %12d%n",
-                "TOTAL GENERAL", pendientes, atendidos, cancelados, total);
+        System.out.println("-".repeat(95));
+        double porcentajeCancelacion = total == 0 ? 0 : cancelados * 100.0 / total;
+        double promedioGlobal = atendidos == 0 ? 0 : minutosAtencionTotal / atendidos;
+        System.out.printf("%-24s %10d %11d %11d %11d %9.1f%% %12.1f%n",
+                "TOTAL GENERAL", pendientes, atendidos, cancelados, total,
+                porcentajeCancelacion, promedioGlobal);
+        if (masSolicitado == null) {
+            System.out.println("Servicio con mayor demanda: sin turnos en el período.");
+        } else {
+            System.out.printf("Servicio con mayor demanda: %s (%d turnos)%n",
+                    masSolicitado.nombreServicio(), masSolicitado.total());
+        }
+    }
+
+    private LocalDate leerFechaOpcional(String mensaje) {
+        while (true) {
+            System.out.print(mensaje);
+            String valor = scanner.nextLine().trim();
+            if (valor.isEmpty()) {
+                return null;
+            }
+            try {
+                return LocalDate.parse(valor);
+            } catch (DateTimeParseException exception) {
+                mostrarError("La fecha debe tener el formato AAAA-MM-DD.");
+            }
+        }
+    }
+
+    private Integer leerCodigoServicioOpcional() {
+        while (true) {
+            System.out.print("Código de servicio (Enter para todos): ");
+            String valor = scanner.nextLine().trim();
+            if (valor.isEmpty()) {
+                return null;
+            }
+            try {
+                int codigo = Integer.parseInt(valor);
+                if (codigo > 0) {
+                    return codigo;
+                }
+            } catch (NumberFormatException exception) {
+                mostrarError("Debe ingresar un código numérico positivo o dejarlo vacío.");
+                continue;
+            }
+            mostrarError("El código debe ser mayor que cero.");
+        }
+    }
+
+    private String leerEstadoTurnoOpcional() {
+        while (true) {
+            System.out.print("Estado (PENDIENTE/ATENDIDO/CANCELADO, Enter para todos): ");
+            String estado = scanner.nextLine().trim();
+            if (estado.isEmpty()) {
+                return null;
+            }
+            if ("PENDIENTE".equals(estado)
+                    || "ATENDIDO".equals(estado)
+                    || "CANCELADO".equals(estado)) {
+                return estado;
+            }
+            mostrarError("El estado debe ser PENDIENTE, ATENDIDO o CANCELADO.");
+        }
     }
 
     private void mostrarClientes(List<Cliente> clientes) {
