@@ -1,5 +1,12 @@
 package com.turnos.negocio;
 
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
 import com.turnos.dao.ClienteDAOImpl;
 import com.turnos.dao.IClienteDAO;
 import com.turnos.dao.IServicioDAO;
@@ -9,16 +16,9 @@ import com.turnos.dao.TurnoDAOImpl;
 import com.turnos.estructuras.BST;
 import com.turnos.estructuras.ColaEnlazada;
 import com.turnos.modelo.Cliente;
+import com.turnos.modelo.ResumenServicio;
 import com.turnos.modelo.Servicio;
 import com.turnos.modelo.Turno;
-
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 public class ServicioNegocio {
 
@@ -84,6 +84,7 @@ public class ServicioNegocio {
 
     public Servicio registrarServicio(Servicio servicio) throws SQLException {
         Objects.requireNonNull(servicio, "El servicio es obligatorio");
+        validarServicio(servicio);
         if (servicioDAO.buscarPorCodigo(servicio.getCodigo()).isPresent()) {
             throw new IllegalArgumentException("Ya existe un servicio con ese código");
         }
@@ -100,14 +101,24 @@ public class ServicioNegocio {
         return servicioDAO.leerTodos();
     }
 
+    public List<Servicio> getServiciosActivos() throws SQLException {
+        return servicioDAO.leerActivos();
+    }
+
     public void actualizarServicio(Servicio servicio) throws SQLException {
         Objects.requireNonNull(servicio, "El servicio es obligatorio");
+        validarServicio(servicio);
         exigirServicio(servicio.getCodigo());
         servicioDAO.actualizar(servicio);
     }
 
     public void cambiarEstadoServicio(int codigo, String estado) throws SQLException {
+        validarEstadoServicio(estado);
         exigirServicio(codigo);
+        if ("Inactivo".equals(estado) && turnoDAO.tieneTurnoPendientePorServicio(codigo)) {
+            throw new IllegalStateException(
+                    "No se puede desactivar un servicio con turnos pendientes");
+        }
         servicioDAO.cambiarEstado(codigo, estado);
     }
 
@@ -177,8 +188,25 @@ public class ServicioNegocio {
         return turnoDAO.buscarPorCliente(codigoCliente);
     }
 
-    public HashMap<String, Long> getResumenPorServicio() throws SQLException {
-        return new HashMap<>(turnoDAO.resumenPorServicio());
+    public List<ResumenServicio> getResumenPorServicio() throws SQLException {
+        return getResumenPorServicio(null, null, null, null);
+    }
+
+    public List<ResumenServicio> getResumenPorServicio(LocalDate desde, LocalDate hasta,
+                                                        Integer codigoServicio, String estado)
+            throws SQLException {
+        if (desde != null && hasta != null && desde.isAfter(hasta)) {
+            throw new IllegalArgumentException(
+                    "La fecha inicial no puede ser posterior a la fecha final");
+        }
+        if (estado != null && !List.of("PENDIENTE", "ATENDIDO", "CANCELADO").contains(estado)) {
+            throw new IllegalArgumentException(
+                    "El estado debe ser PENDIENTE, ATENDIDO o CANCELADO");
+        }
+        if (codigoServicio != null) {
+            exigirServicio(codigoServicio);
+        }
+        return turnoDAO.resumenPorServicio(desde, hasta, codigoServicio, estado);
     }
 
     public void cerrar() {
@@ -209,6 +237,22 @@ public class ServicioNegocio {
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "No existe un servicio con código " + codigo));
+    }
+
+    private void validarServicio(Servicio servicio) {
+        if (servicio.getCodigo() <= 0) {
+            throw new IllegalArgumentException("El código del servicio debe ser mayor que cero");
+        }
+        if (servicio.getNombre().isBlank()) {
+            throw new IllegalArgumentException("El nombre del servicio no puede estar vacío");
+        }
+        validarEstadoServicio(servicio.getEstado());
+    }
+
+    private void validarEstadoServicio(String estado) {
+        if (!"Activo".equals(estado) && !"Inactivo".equals(estado)) {
+            throw new IllegalArgumentException("El estado debe ser Activo o Inactivo");
+        }
     }
 
     private boolean tieneTurnoPendiente(int codigoCliente) {
