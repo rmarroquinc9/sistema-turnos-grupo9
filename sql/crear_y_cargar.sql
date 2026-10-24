@@ -33,6 +33,12 @@ CREATE TABLE turnos (
     FOREIGN KEY (codigo_servicio) REFERENCES servicios(codigo)
 );
 
+-- Índices para búsquedas, filtros de reportes y consultas de turnos
+CREATE INDEX idx_turnos_codigo_cliente ON turnos(codigo_cliente);
+CREATE INDEX idx_turnos_codigo_servicio ON turnos(codigo_servicio);
+CREATE INDEX idx_turnos_estado ON turnos(estado);
+CREATE INDEX idx_turnos_fecha_generacion ON turnos(fecha_generacion);
+
 -- Datos iniciales de clientes
 INSERT INTO clientes (codigo, nombre, telefono, estado) VALUES (1001, 'Ana López', '55501001', 'Activo');
 INSERT INTO clientes (codigo, nombre, telefono, estado) VALUES (1002, 'Carlos Pérez', '55501002', 'Activo');
