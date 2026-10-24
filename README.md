@@ -4,7 +4,7 @@ Aplicación de consola desarrollada en Java para administrar la atención de cli
 
 ## Tecnologías y requisitos
 
-- **Lenguaje:** Java 21.
+- **Lenguaje:** Java 25 (LTS).
 - **Base de datos:** SQLite, almacenada localmente en `data/turnos.db`.
 - **Conectividad:** JDBC.
 - **Dependencia:** `sqlite-jdbc-3.36.0.3.jar`, incluida en `lib/`.
@@ -62,7 +62,9 @@ En Linux o macOS, use `:` en lugar de `;` como separador del classpath y `/` en 
 - Validación de teléfonos, estados, códigos y datos obligatorios.
 - Atención de turnos mediante una cola FIFO.
 - Persistencia de clientes, servicios y turnos en SQLite.
-- Consultas de historial y resumen de turnos por servicio.
+- Consultas de historial y reporte por servicio con cantidades de turnos pendientes, atendidos, cancelados y total general.
+- Reportes por servicio filtrables por fechas (AAAA-MM-DD), servicio y estado, con porcentaje de cancelación, promedio de minutos entre generación y atención, y servicio con mayor demanda.
+- Protección para no desactivar servicios que tengan turnos pendientes; los turnos nuevos solo pueden generarse para servicios activos.
 
 ## Estructura del proyecto
 
@@ -114,6 +116,4 @@ GRUPO 9/
 
 - Rubí Ester Marroqin Carias Carne:0905-24-11744
 - Ericson José Cristales Rivera Carne:5190-24-10720
-- Kevin Arel Navas Arias 5990-22-11393
-
-
+- Nombre del integrante 3
