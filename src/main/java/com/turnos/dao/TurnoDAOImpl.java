@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +16,7 @@ import java.util.Optional;
 public class TurnoDAOImpl implements ITurnoDAO {
 
     private static final String INSERTAR = """
-            INSERT INTO turnos
+            INSERT INTO turnos              
                 (codigo_cliente, codigo_servicio, fecha_generacion, estado, fecha_atencion)
             VALUES (?, ?, ?, ?, ?)
             """;
@@ -43,16 +44,26 @@ public class TurnoDAOImpl implements ITurnoDAO {
             WHERE codigo_cliente = ?
             ORDER BY numero
             """;
+    private static final String TIENE_PENDIENTE_POR_SERVICIO = """
+            SELECT 1
+            FROM turnos
+            WHERE codigo_servicio = ? AND estado = 'PENDIENTE'
+            LIMIT 1
+            """;
     private static final String RESUMEN_POR_SERVICIO = """
-            SELECT s.nombre,
+            SELECT s.codigo,
+                   s.nombre,
                    SUM(CASE WHEN t.estado = 'PENDIENTE' THEN 1 ELSE 0 END) AS pendientes,
                    SUM(CASE WHEN t.estado = 'ATENDIDO' THEN 1 ELSE 0 END) AS atendidos,
                    SUM(CASE WHEN t.estado = 'CANCELADO' THEN 1 ELSE 0 END) AS cancelados,
-                   COUNT(t.numero) AS total
+                   COUNT(t.numero) AS total,
+                   ROUND(COALESCE(AVG(CASE WHEN t.estado = 'ATENDIDO'
+                                           AND t.fecha_atencion IS NOT NULL
+                                           THEN (julianday(t.fecha_atencion)
+                                                 - julianday(t.fecha_generacion)) * 1440.0
+                                      END), 0), 2) AS promedio_minutos_atencion
             FROM servicios s
             LEFT JOIN turnos t ON t.codigo_servicio = s.codigo
-            GROUP BY s.codigo, s.nombre
-            ORDER BY s.codigo
             """;
 
     @Override
@@ -117,6 +128,18 @@ public class TurnoDAOImpl implements ITurnoDAO {
     }
 
     @Override
+    public boolean tieneTurnoPendientePorServicio(int codigoServicio) throws SQLException {
+        try (Connection conexion = SQLiteConnection.obtenerConexion();
+             PreparedStatement statement =
+                     conexion.prepareStatement(TIENE_PENDIENTE_POR_SERVICIO)) {
+            statement.setInt(1, codigoServicio);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
+    }
+
+    @Override
     public List<Turno> buscarPorCliente(int codigoCliente) throws SQLException {
         try (Connection conexion = SQLiteConnection.obtenerConexion();
              PreparedStatement statement = conexion.prepareStatement(BUSCAR_POR_CLIENTE)) {
@@ -128,18 +151,49 @@ public class TurnoDAOImpl implements ITurnoDAO {
     }
 
     @Override
-    public List<ResumenServicio> resumenPorServicio() throws SQLException {
+    public List<ResumenServicio> resumenPorServicio(LocalDate desde, LocalDate hasta,
+                                                     Integer codigoServicio, String estado)
+            throws SQLException {
         List<ResumenServicio> resumen = new ArrayList<>();
+        StringBuilder consulta = new StringBuilder(RESUMEN_POR_SERVICIO);
+        List<String> parametros = new ArrayList<>();
+        if (desde != null) {
+            consulta.append(" AND t.fecha_generacion >= ?");
+            parametros.add(desde.atStartOfDay().toString());
+        }
+        if (hasta != null) {
+            consulta.append(" AND t.fecha_generacion < ?");
+            parametros.add(hasta.plusDays(1).atStartOfDay().toString());
+        }
+        if (estado != null) {
+            consulta.append(" AND t.estado = ?");
+            parametros.add(estado);
+        }
+        if (codigoServicio != null) {
+            consulta.append(" WHERE s.codigo = ?");
+        }
+        consulta.append(" GROUP BY s.codigo, s.nombre ORDER BY s.codigo");
+
         try (Connection conexion = SQLiteConnection.obtenerConexion();
-             PreparedStatement statement = conexion.prepareStatement(RESUMEN_POR_SERVICIO);
-             ResultSet resultSet = statement.executeQuery()) {
-            while (resultSet.next()) {
-                resumen.add(new ResumenServicio(
-                        resultSet.getString("nombre"),
-                        resultSet.getLong("pendientes"),
-                        resultSet.getLong("atendidos"),
-                        resultSet.getLong("cancelados"),
-                        resultSet.getLong("total")));
+             PreparedStatement statement = conexion.prepareStatement(consulta.toString())) {
+            int indiceParametro = 1;
+            for (String parametro : parametros) {
+                statement.setString(indiceParametro++, parametro);
+            }
+            if (codigoServicio != null) {
+                statement.setInt(indiceParametro, codigoServicio);
+            }
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    resumen.add(new ResumenServicio(
+                            resultSet.getInt("codigo"),
+                            resultSet.getString("nombre"),
+                            resultSet.getLong("pendientes"),
+                            resultSet.getLong("atendidos"),
+                            resultSet.getLong("cancelados"),
+                            resultSet.getLong("total"),
+                            resultSet.getDouble("promedio_minutos_atencion")));
+                }
             }
         }
         return resumen;

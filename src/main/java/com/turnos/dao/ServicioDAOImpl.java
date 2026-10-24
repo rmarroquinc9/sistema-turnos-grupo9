@@ -21,6 +21,12 @@ public class ServicioDAOImpl implements IServicioDAO {
             FROM servicios
             ORDER BY codigo
             """;
+    private static final String LEER_ACTIVOS = """
+            SELECT codigo, nombre, estado
+            FROM servicios
+            WHERE estado = 'Activo'
+            ORDER BY codigo
+            """;
     private static final String BUSCAR_POR_CODIGO = """
             SELECT codigo, nombre, estado
             FROM servicios
@@ -53,6 +59,19 @@ public class ServicioDAOImpl implements IServicioDAO {
         List<Servicio> servicios = new ArrayList<>();
         try (Connection conexion = SQLiteConnection.obtenerConexion();
              PreparedStatement statement = conexion.prepareStatement(LEER_TODOS);
+             ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
+                servicios.add(mapear(resultSet));
+            }
+        }
+        return servicios;
+    }
+
+    @Override
+    public List<Servicio> leerActivos() throws SQLException {
+        List<Servicio> servicios = new ArrayList<>();
+        try (Connection conexion = SQLiteConnection.obtenerConexion();
+             PreparedStatement statement = conexion.prepareStatement(LEER_ACTIVOS);
              ResultSet resultSet = statement.executeQuery()) {
             while (resultSet.next()) {
                 servicios.add(mapear(resultSet));

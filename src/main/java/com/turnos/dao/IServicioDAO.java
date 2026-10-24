@@ -12,6 +12,8 @@ public interface IServicioDAO {
 
     List<Servicio> leerTodos() throws SQLException;
 
+    List<Servicio> leerActivos() throws SQLException;
+
     Optional<Servicio> buscarPorCodigo(int codigo) throws SQLException;
 
     void actualizar(Servicio servicio) throws SQLException;
