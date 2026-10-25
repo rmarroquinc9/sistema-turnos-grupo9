@@ -116,4 +116,4 @@ GRUPO 9/
 
 - Rubí Ester Marroqin Carias Carne:0905-24-11744
 - Ericson José Cristales Rivera Carne:5190-24-10720
-- Nombre del integrante 3
+- Kevin Ariel Navas Arias Carne: 54990-22-11393
