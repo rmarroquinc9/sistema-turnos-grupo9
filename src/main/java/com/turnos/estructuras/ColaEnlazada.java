@@ -2,83 +2,83 @@ package com.turnos.estructuras;
 
 import com.turnos.modelo.Turno;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+public class ColaEnlazada {
+    private Nodo frente;
+    private Nodo fin;
 
-public class ColaEnlazada<T> {
-
-    private Nodo<T> frente;
-    private Nodo<T> finalCola;
-
-    public void encolar(T dato) {
-        Objects.requireNonNull(dato, "El dato no puede ser nulo");
-
-        Nodo<T> nuevoNodo = new Nodo<>(dato);
-        if (estaVacia()) {
-            frente = nuevoNodo;
-            finalCola = nuevoNodo;
-            return;
-        }
-
-        finalCola.setSiguiente(nuevoNodo);
-        finalCola = nuevoNodo;
-    }
-
-    public T desencolar() {
-        if (estaVacia()) {
-            return null;
-        }
-
-        T dato = frente.getDato();
-        frente = frente.getSiguiente();
-        if (frente == null) {
-            finalCola = null;
-        }
-        return dato;
-    }
-
-    public T consultarPrimero() {
-        return estaVacia() ? null : frente.getDato();
+    public ColaEnlazada() {
+        this.frente = null;
+        this.fin = null;
     }
 
     public boolean estaVacia() {
         return frente == null;
     }
 
-    public List<T> recorrer() {
-        List<T> elementos = new ArrayList<>();
-        Nodo<T> actual = frente;
-
-        while (actual != null) {
-            elementos.add(actual.getDato());
-            actual = actual.getSiguiente();
+    public void encolar(Turno turno) {
+        Nodo nuevoNodo = new Nodo(turno);
+        if (estaVacia()) {
+            frente = nuevoNodo;
+        } else {
+            fin.setSiguiente(nuevoNodo);
         }
-        return elementos;
+        fin = nuevoNodo;
     }
 
-    public boolean cancelarPorNumero(int numero) {
-        Nodo<T> anterior = null;
-        Nodo<T> actual = frente;
+    public Turno desencolar() {
+        if (estaVacia()) {
+            return null;
+        }
+        Turno turno = frente.getTurno();
+        frente = frente.getSiguiente();
+        if (frente == null) {
+            fin = null;
+        }
+        return turno;
+    }
 
-        while (actual != null) {
-            T dato = actual.getDato();
-            if (dato instanceof Turno turno && turno.getNumero() == numero) {
-                if (anterior == null) {
-                    frente = actual.getSiguiente();
-                } else {
-                    anterior.setSiguiente(actual.getSiguiente());
-                }
+    public Turno consultarPrimerTurno() {
+        if (estaVacia()) return null;
+        return frente.getTurno();
+    }
 
-                if (actual == finalCola) {
-                    finalCola = anterior;
-                }
-                return true;
-            }
+    public boolean cancelarTurnoPorNumero(int numero) {
+        if (estaVacia()) return false;
 
-            anterior = actual;
+        // Si el turno a cancelar está al frente
+        if (frente.getTurno().getNumero() == numero) {
+            frente = frente.getSiguiente();
+            if (frente == null) fin = null;
+            return true;
+        }
+
+        // Si está en medio o al final
+        Nodo actual = frente;
+        while (actual.getSiguiente() != null && actual.getSiguiente().getTurno().getNumero() != numero) {
             actual = actual.getSiguiente();
         }
+
+        if (actual.getSiguiente() != null) {
+            if (actual.getSiguiente() == fin) {
+                fin = actual; // Actualizar el fin si se elimina el último
+            }
+            actual.setSiguiente(actual.getSiguiente().getSiguiente());
+            return true;
+        }
+
         return false;
+    }
+
+    public void recorrerYMostrar() {
+        if (estaVacia()) {
+            System.out.println("No hay turnos pendientes en la cola.");
+            return;
+        }
+        Nodo actual = frente;
+        while (actual != null) {
+            Turno t = actual.getTurno();
+            System.out.println("Turno: " + t.getNumero() + " | Cliente: " + t.getCodigoCliente() + " | Servicio: " + t.getCodigoServicio());
+            actual = actual.getSiguiente();
+        }
     }
 }

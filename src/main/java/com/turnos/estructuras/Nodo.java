@@ -1,27 +1,17 @@
 package com.turnos.estructuras;
 
-public class Nodo<T> {
+import com.turnos.modelo.Turno;
 
-    private T dato;
-    private Nodo<T> siguiente;
+public class Nodo {
+    private Turno turno;
+    private Nodo siguiente;
 
-    public Nodo(T dato) {
-        this.dato = dato;
+    public Nodo(Turno turno) {
+        this.turno = turno;
+        this.siguiente = null;
     }
 
-    public T getDato() {
-        return dato;
-    }
-
-    public void setDato(T dato) {
-        this.dato = dato;
-    }
-
-    public Nodo<T> getSiguiente() {
-        return siguiente;
-    }
-
-    public void setSiguiente(Nodo<T> siguiente) {
-        this.siguiente = siguiente;
-    }
+    public Turno getTurno() { return turno; }
+    public Nodo getSiguiente() { return siguiente; }
+    public void setSiguiente(Nodo siguiente) { this.siguiente = siguiente; }
 }
