@@ -22,7 +22,12 @@ public final class SQLiteConnection {
             cerrarConexion(conexion);
             throw exception;
         }
+
         return conexion;
+    }
+
+    public static Connection getConnection() throws SQLException {
+        return obtenerConexion();
     }
 
     private static void asegurarIndices(Statement statement) throws SQLException {

@@ -1,10 +1,12 @@
 package com.turnos.estructuras;
 
 import com.turnos.modelo.Turno;
+import java.util.ArrayList;
+import java.util.List;
 
-public class ColaEnlazada {
-    private Nodo frente;
-    private Nodo fin;
+public class ColaEnlazada<T> {
+    private Nodo<T> frente;
+    private Nodo<T> fin;
 
     public ColaEnlazada() {
         this.frente = null;
@@ -15,8 +17,8 @@ public class ColaEnlazada {
         return frente == null;
     }
 
-    public void encolar(Turno turno) {
-        Nodo nuevoNodo = new Nodo(turno);
+    public void encolar(T elemento) {
+        Nodo<T> nuevoNodo = new Nodo<>(elemento);
         if (estaVacia()) {
             frente = nuevoNodo;
         } else {
@@ -25,36 +27,35 @@ public class ColaEnlazada {
         fin = nuevoNodo;
     }
 
-    public Turno desencolar() {
+    public T desencolar() {
         if (estaVacia()) {
             return null;
         }
-        Turno turno = frente.getTurno();
+        T elemento = frente.getElemento();
         frente = frente.getSiguiente();
         if (frente == null) {
             fin = null;
         }
-        return turno;
+        return elemento;
     }
 
-    public Turno consultarPrimerTurno() {
+    public T consultarPrimero() {
         if (estaVacia()) return null;
-        return frente.getTurno();
+        return frente.getElemento();
     }
 
-    public boolean cancelarTurnoPorNumero(int numero) {
+    public boolean cancelarPorNumero(int numero) {
         if (estaVacia()) return false;
 
-        // Si el turno a cancelar está al frente
-        if (frente.getTurno().getNumero() == numero) {
+        if (esTurnoConNumero(frente.getElemento(), numero)) {
             frente = frente.getSiguiente();
             if (frente == null) fin = null;
             return true;
         }
 
-        // Si está en medio o al final
-        Nodo actual = frente;
-        while (actual.getSiguiente() != null && actual.getSiguiente().getTurno().getNumero() != numero) {
+        Nodo<T> actual = frente;
+        while (actual.getSiguiente() != null
+                && !esTurnoConNumero(actual.getSiguiente().getElemento(), numero)) {
             actual = actual.getSiguiente();
         }
 
@@ -69,16 +70,41 @@ public class ColaEnlazada {
         return false;
     }
 
+    public List<T> recorrer() {
+        List<T> elementos = new ArrayList<>();
+        Nodo<T> actual = frente;
+        while (actual != null) {
+            elementos.add(actual.getElemento());
+            actual = actual.getSiguiente();
+        }
+        return elementos;
+    }
+
+    public T consultarPrimerTurno() {
+        return consultarPrimero();
+    }
+
+    public boolean cancelarTurnoPorNumero(int numero) {
+        return cancelarPorNumero(numero);
+    }
+
     public void recorrerYMostrar() {
         if (estaVacia()) {
             System.out.println("No hay turnos pendientes en la cola.");
             return;
         }
-        Nodo actual = frente;
+        Nodo<T> actual = frente;
         while (actual != null) {
-            Turno t = actual.getTurno();
+            if (!(actual.getElemento() instanceof Turno t)) {
+                actual = actual.getSiguiente();
+                continue;
+            }
             System.out.println("Turno: " + t.getNumero() + " | Cliente: " + t.getCodigoCliente() + " | Servicio: " + t.getCodigoServicio());
             actual = actual.getSiguiente();
         }
+    }
+
+    private boolean esTurnoConNumero(T elemento, int numero) {
+        return elemento instanceof Turno turno && turno.getNumero() == numero;
     }
 }

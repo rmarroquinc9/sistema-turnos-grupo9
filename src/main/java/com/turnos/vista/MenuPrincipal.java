@@ -283,42 +283,34 @@ public class MenuPrincipal {
         List<ResumenServicio> resumenes =
                 negocio.getResumenPorServicio(desde, hasta, codigoServicio, estado);
         System.out.println("\n--- RESUMEN POR SERVICIO ---");
-        System.out.printf("%-24s %10s %11s %11s %11s %10s %12s%n",
-                "Servicio", "Pendientes", "Atendidos", "Cancelados", "Total",
-                "% cancel.", "Prom. min.");
-        System.out.println("-".repeat(95));
+        System.out.printf("%-30s %12s %11s %11s %8s%n",
+                "Servicio", "Pendientes", "Atendidos", "Cancelados", "Total");
+        System.out.println("-".repeat(80));
 
         long pendientes = 0;
         long atendidos = 0;
         long cancelados = 0;
         long total = 0;
-        double minutosAtencionTotal = 0;
         ResumenServicio masSolicitado = null;
         for (ResumenServicio resumen : resumenes) {
-            System.out.printf("%-24s %10d %11d %11d %11d %9.1f%% %12.1f%n",
+            System.out.printf("%-30s %12d %11d %11d %8d%n",
                     resumen.codigoServicio() + ": " + resumen.nombreServicio(),
                     resumen.pendientes(),
                     resumen.atendidos(),
                     resumen.cancelados(),
-                    resumen.total(),
-                    resumen.porcentajeCancelacion(),
-                    resumen.promedioMinutosAtencion());
+                    resumen.total());
             pendientes += resumen.pendientes();
             atendidos += resumen.atendidos();
             cancelados += resumen.cancelados();
             total += resumen.total();
-            minutosAtencionTotal += resumen.promedioMinutosAtencion() * resumen.atendidos();
             if (resumen.total() > 0
                     && (masSolicitado == null || resumen.total() > masSolicitado.total())) {
                 masSolicitado = resumen;
             }
         }
-        System.out.println("-".repeat(95));
-        double porcentajeCancelacion = total == 0 ? 0 : cancelados * 100.0 / total;
-        double promedioGlobal = atendidos == 0 ? 0 : minutosAtencionTotal / atendidos;
-        System.out.printf("%-24s %10d %11d %11d %11d %9.1f%% %12.1f%n",
-                "TOTAL GENERAL", pendientes, atendidos, cancelados, total,
-                porcentajeCancelacion, promedioGlobal);
+        System.out.println("-".repeat(80));
+        System.out.printf("%-30s %12d %11d %11d %8d%n",
+                "TOTAL GENERAL", pendientes, atendidos, cancelados, total);
         if (masSolicitado == null) {
             System.out.println("Servicio con mayor demanda: sin turnos en el período.");
         } else {
