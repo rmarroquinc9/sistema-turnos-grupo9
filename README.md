@@ -144,10 +144,9 @@ GRUPO 9/
 
 El equipo se organizó siguiendo la distribución sugerida por el catedrático:
 
-![Distribución del Trabajo](distribución.png)
+   ![Distribución del Trabajo](distribución.png)
 
+   ## Repositorio Git
 
-## Repositorio Git
-
-El código fuente completo, historial de commits y diagramas están disponibles en:  
-**https://github.com/rmarroquinc9/sistema-turnos-grupo9**+
+   El código fuente completo, historial de commits y diagramas están disponibles en:  
+   **https://github.com/rmarroquinc9/sistema-turnos-grupo9**
