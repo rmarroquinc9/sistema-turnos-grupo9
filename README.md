@@ -2,6 +2,36 @@
 
 Aplicación de consola desarrollada en Java para administrar la atención de clientes en una oficina de servicios. El sistema permite registrar clientes, gestionar servicios, generar turnos y atenderlos en orden de llegada, utilizando estructuras de datos propias y persistencia en una base de datos SQLite.
 
+
+## Integrantes del Grupo 9
+
+- Rubí Ester Marroqin Carias Carne:0905-24-11744
+- Ericson José Cristales Rivera Carne:5190-24-10720
+- Kevin Ariel Navas Arias Carne: 54990-22-11393
+
+
+## Instrucciones para abrir en VS Code
+
+1. Abra Visual Studio Code.
+2. Vaya a **Archivo → Abrir Carpeta**.
+3. Seleccione la carpeta del proyecto (`sistema-turnos-grupo9`).
+4. Instale la extensión **"Extension Pack for Java"** si no la tiene.
+5. Abra una terminal integrada con **Ctrl + ñ** (o **Ctrl + Shift + ñ** para PowerShell).
+6. Siga las instrucciones de ejecución de la sección "Cómo ejecutar el proyecto".
+
+## Instrucciones para crear la base de datos desde el script
+
+Si desea recrear la base de datos desde cero usando el script SQL:
+
+1. Abra el archivo `sql/crear_y_cargar.sql` en VS Code.
+2. Instale la extensión **"SQLite Viewer"** o use un cliente como **DB Browser for SQLite**.
+3. Ejecute el contenido del script contra un archivo nuevo llamado `turnos.db` en la carpeta `data/`.
+4. Alternativamente, simplemente ejecute la clase `Inicializador.java` desde VS Code o terminal, que hace lo mismo automáticamente:
+   ```powershell
+   java -cp "target\classes;lib\sqlite-jdbc-3.36.0.3.jar" com.turnos.Inicializador
+
+
+
 ## Tecnologías y requisitos
 
 - **Lenguaje:** Java 25 (LTS).
@@ -110,10 +140,14 @@ GRUPO 9/
 ### Diagrama Entidad-Relación (DER)
 ![Diagrama ER](er.png)
 
+## Distribución del Trabajo
+
+El equipo se organizó siguiendo la distribución sugerida por el catedrático:
+
+![Distribución del Trabajo](distribución.png)
 
 
-## Integrantes del Grupo 9
+## Repositorio Git
 
-- Rubí Ester Marroqin Carias Carne:0905-24-11744
-- Ericson José Cristales Rivera Carne:5190-24-10720
-- Kevin Ariel Navas Arias Carne: 54990-22-11393
+El código fuente completo, historial de commits y diagramas están disponibles en:  
+**https://github.com/rmarroquinc9/sistema-turnos-grupo9**+
