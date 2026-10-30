@@ -7,7 +7,7 @@ Aplicación de consola desarrollada en Java para administrar la atención de cli
 
 - Rubí Ester Marroqin Carias Carne:0905-24-11744
 - Ericson José Cristales Rivera Carne:5190-24-10720
-- Kevin Ariel Navas Arias Carne: 54990-22-11393
+- Kevin Ariel Navas Arias Carne: 5990-22-11393
 
 
 ## Instrucciones para abrir en VS Code
